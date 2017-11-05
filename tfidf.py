@@ -6,7 +6,6 @@ def initializeWordCount(documentNameIn):
 
     linesIn = loadAllData()
     linesOut = {}
-    termNumDoc = {}
 
     nbDocument = linesIn[-1].split()[0]
     print(nbDocument)
@@ -22,38 +21,10 @@ def initializeWordCount(documentNameIn):
         else:
             linesOut[idListIn] = int(lineInWithoutId[1])
 
-    print(len(linesOut))
-
-    #isInList = False
-    # for i in range(len(linesOut)):
-    #     splitedLine = linesOut[i].split()
-
-    #     idListOut = int(splitedLine[0])
-    #     idListIn = int(lineInWithoutId[0])
-
-    #     if idListIn == idListOut:
-    #         linesOut[i] = computeNewFrequence(splitedLine, lineInWithoutId)
-    #         isInList = True
-    #         break
-    #     elif idListIn < idListOut:
-    #         linesOut.insert(i, " ".join(lineInWithoutId) + "\n")
-    #         isInList = True
-    #         break
-
-    # if not isInList:
-    #     linesOut.append(" ".join(lineInWithoutId) + "\n")
-    #print(sorted(linesOut, key=getKey))
-    # print(linesOut)
-    #writeDataInFile(documentNameOut, linesOut)
-
 
 def sortDictionaryByValue(dictionary):
     print("Sorting dictionary")
     return sorted(dictionary.items(), key=operator.itemgetter(1))
-
-
-def getKey(item):
-    return int(item.split()[0])
 
 
 def loadAllData():
@@ -64,7 +35,6 @@ def loadAllData():
             "nsfabs_part{0}_out/docwords.txt".format(i))
         dataLoaded += data
 
-    print(len(dataLoaded))
     return dataLoaded
 
 
@@ -75,10 +45,6 @@ def getListWordsFromFile(fileName):
 
 def dataWithoutId(line):
     return line.split()[1:]
-
-
-def computeNewFrequence(oldLine, newLine):
-    return oldLine[0] + " " + str(int(oldLine[1]) + int(newLine[1])) + "\n"
 
 
 def writeDataInFile(fileName, data):
