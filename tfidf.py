@@ -77,10 +77,6 @@ def makeClusteringData(fileNameDocWords, fileNameWordsOut):
     docWords = loadAllData(fileNameDocWords)
     wordsOut = getListWordsFromFile(fileNameWordsOut)
 
-    for 
-
-
-
 
 if __name__ == "__main__":
     path = "nsfabs_part{0}_out/docwords.txt"
