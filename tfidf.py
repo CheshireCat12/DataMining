@@ -1,58 +1,142 @@
-import operator
 from math import log
+from copy import deepcopy
+import time
+import operator
+from functools import wraps
 
 
-def initializeWordCount(documentNameIn):
-    documentNameOut = "wordsOut.txt"
+class Tfidf:
 
-    linesIn = loadAllData(documentNameIn)
-    linesOut = {}
-    nbOccurenceWordInDocument = {}
+    def __init__(self, document, numberOfWordChosen):
+        print("Creation of the class...")
+        self.numberOfWordPerDocument = {}
+        self.frequencePerWordInDocument = {}
+        self.nbOccurenceWordInDocument = {}
+        self.document = document
+        self.numberOfWordChosen = numberOfWordChosen
 
-    totalNumberOfDocument = linesIn[-1].split()[0]
+    def name_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            print("The function {0} is executed...\n".format(func.__name__))
+            result = func(*args, **kwargs)
+            return result
+        return wrapper
 
-    print("Creation of the dictionary...")
-    for dataIn in linesIn:
+    @name_decorator
+    def getNumberOfWordInEachDocument(self):
+        for lines in self.document:
+            splittedLine = lines.split()
+            idDoc = splittedLine[0]
+            idWord = splittedLine[1]
+            frequenceWord = int(splittedLine[2])
 
-        lineInWithoutId = dataWithoutId(dataIn)
-        idListIn = lineInWithoutId[0]
+            self.getEachWordInDocument(idDoc, idWord, frequenceWord)
+            self.getNumberOfOccurence(
+                idDoc, frequenceWord, self.numberOfWordPerDocument)
 
-        if idListIn in linesOut:
-            linesOut[idListIn] += int(lineInWithoutId[1])
-            nbOccurenceWordInDocument[idListIn] += 1
+    def getEachWordInDocument(self, idDoc, idWord, frequenceWord):
+        if idDoc in self.frequencePerWordInDocument:
+            self.frequencePerWordInDocument[idDoc][idWord] = frequenceWord
         else:
-            linesOut[idListIn] = int(lineInWithoutId[1])
-            nbOccurenceWordInDocument[idListIn] = 1
+            self.frequencePerWordInDocument[idDoc] = {idWord: frequenceWord}
 
-    idfDict = idf(nbOccurenceWordInDocument, totalNumberOfDocument)
+    def getNumberOfDocument(self):
+        return int(self.document[-1].split()[0])
 
-    for idWord in linesOut:
-        linesOut[idWord] = linesOut[idWord] * idfDict[idWord]
+    @name_decorator
+    def tf(self):
+        copyOfFreqWord = deepcopy(self.frequencePerWordInDocument)
 
-    linesOut = sortDictionaryByValue(linesOut)
+        for doc in self.frequencePerWordInDocument:
+            for word in self.frequencePerWordInDocument[doc]:
 
-    writeDataInFile(documentNameOut, linesOut)
+                copyOfFreqWord[doc][word] /= self.numberOfWordPerDocument[doc]
+
+                self.getNumberOfOccurence(
+                    word,
+                    1,
+                    self.nbOccurenceWordInDocument)
+
+        return copyOfFreqWord
+
+    def getNumberOfOccurence(self, id, frequence, dictionary):
+        dictionary[id] = dictionary.get(id, 0) + frequence
+
+    @name_decorator
+    def idf(self):
+        numberOfDocument = self.getNumberOfDocument()
+        copyOfOccurenceWord = deepcopy(self.nbOccurenceWordInDocument)
+
+        for termId in copyOfOccurenceWord:
+            copyOfOccurenceWord[termId] = log(
+                numberOfDocument / copyOfOccurenceWord[termId])
+
+        return copyOfOccurenceWord
+
+    @name_decorator
+    def tfidf(self, tfDict, idfDict):
+        tfidfPerWords = {}
+
+        for doc in tfDict:
+            for words in tfDict[doc]:
+                self.getNumberOfOccurence(
+                    words, tfDict[doc][words], tfidfPerWords)
+
+        for words in tfidfPerWords:
+            tfidfPerWords[words] *= idfDict[words]
+
+        return tfidfPerWords
+
+    @name_decorator
+    def sortAndSelectByValue(self, dictionary):
+        sortedDictionary = sorted(
+            dictionary.items(), key=operator.itemgetter(1), reverse=True)
+
+        return sortedDictionary[:self.numberOfWordChosen]
+
+    @name_decorator
+    def writeResult(self, selectedWord, fileNameOut):
+        result = {}
+
+        for lines in self.frequencePerWordInDocument:
+            result[lines] = list()
+            for selected in selectedWord:
+                temp = 0
+                for word in self.frequencePerWordInDocument[lines]:
+                    if word == selected[0]:
+                        temp = selected[1]
+                result[lines].append(temp)
+
+        self.writeResultWords(selectedWord, fileNameOut)
+
+        with open(fileNameOut + "Array.txt", 'w+') as fileOut:
+            for lines in result:
+                fileOut.writelines(str(result[lines]) + "\n")
+
+    def writeResultWords(self, selectedWord, fileNameOut):
+        arrayOut = [k + " " + str(v) + "\n" for k, v in selectedWord]
+        with open(fileNameOut + "Words.txt", "w+") as fileOut:
+            fileOut.writelines(arrayOut)
 
 
-def idf(nbOccurenceWordInDocument, numberOfDocument):
-    for termId in nbOccurenceWordInDocument:
-        nbOccurenceWordInDocument[termId] = log(
-            int(numberOfDocument) / nbOccurenceWordInDocument[termId])
-    return nbOccurenceWordInDocument
+def time_decorator(func):
+    def wrapper(*args, **kwargs):
+        print("The function {0} is executed...".format(func.__name__))
+        start = time.clock()
+        result = func(*args, **kwargs)
+        end = time.clock()
+        print('{0} is executed in {1}s'.format(func.__name__, end-start))
+        return result
+    return wrapper
 
 
-def sortDictionaryByValue(dictionary):
-    print("Sorting dictionary...")
-    sortedDictionary = sorted(
-        dictionary.items(), key=operator.itemgetter(1), reverse=True)[:10]
-    return [k + " " + str(v) + "\n" for k, v in sortedDictionary]
-
-
-def loadAllData(pathFileName):
-    print("Loading data...")
+@time_decorator
+def loadAllData(fileName):
     dataLoaded = list()
+
     for i in range(1, 4):
-        data = getListWordsFromFile(pathFileName.format(i))
+        data = getListWordsFromFile(fileName.format(i))
         dataLoaded += data
 
     return dataLoaded
@@ -63,21 +147,22 @@ def getListWordsFromFile(fileName):
         return fileIn.readlines()
 
 
-def dataWithoutId(line):
-    return line.split()[1:]
+@time_decorator
+def main():
+    fileName = "nsfabs_part{0}_out/docwords.txt"
+    docWords = loadAllData(fileName)
 
+    myTfidf = Tfidf(docWords, 5)
+    myTfidf.getNumberOfWordInEachDocument()
 
-def writeDataInFile(fileName, data):
-    print("Writing data..")
-    with open(fileName, 'w+') as fileOut:
-        fileOut.writelines(data)
+    myTf = myTfidf.tf()
+    myIdf = myTfidf.idf()
 
+    myTfIdfDict = myTfidf.tfidf(myTf, myIdf)
+    sortedTfIdf = myTfidf.sortAndSelectByValue(myTfIdfDict)
 
-def makeClusteringData(fileNameDocWords, fileNameWordsOut):
-    docWords = loadAllData(fileNameDocWords)
-    wordsOut = getListWordsFromFile(fileNameWordsOut)
+    myTfidf.writeResult(sortedTfIdf, "results/result")
 
 
 if __name__ == "__main__":
-    path = "nsfabs_part{0}_out/docwords.txt"
-    initializeWordCount(path)
+    main()
