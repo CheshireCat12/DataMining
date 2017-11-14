@@ -152,7 +152,7 @@ def main():
     fileName = "nsfabs_part{0}_out/docwords.txt"
     docWords = loadAllData(fileName)
 
-    myTfidf = Tfidf(docWords, 5)
+    myTfidf = Tfidf(docWords[:10000], 500)
     myTfidf.getNumberOfWordInEachDocument()
 
     myTf = myTfidf.tf()

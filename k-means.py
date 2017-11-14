@@ -1,10 +1,14 @@
 import numpy as np
 from random import randint
+from tfidf import getListWordsFromFile
+from ast import literal_eval
 
 
 def kmeans(k, epsilon, X):
     N = len(X)
-    V = initV_vector(N - 1, k, X)
+    size = len(X[0])
+    #print(size)
+    V = initV_vector(N-1, k, X)
     U = np.zeros(shape=(N, k))
 
     while True:
@@ -28,12 +32,12 @@ def kmeans(k, epsilon, X):
                     c = j
             # print(U)
             # print("V ", V)
-        # print(U)
-        # print("V ", V)
+        #print(U)
+        #print("V ", V)
 
         V1 = initV_vector(0, k, X)
         for c in range(k):
-            vect1 = [0 for i in range(k)]
+            vect1 = [0 for i in range(size)]
             somme1 = 0
             sommeEuclideanDist = 0
             for i in range(N):
@@ -69,7 +73,7 @@ def divideVectorByValue(vector, value):
 
 
 def initV_vector(rangeOfInitValue, k, X):
-    return np.array([X[(randint(0, rangeOfInitValue))] for i in range(0, k)])
+    return np.array([X[(randint(0, rangeOfInitValue))] for i in range(k)])
 
 
 def distCos(x, y):
@@ -95,8 +99,18 @@ def myNorm(x):
     return np.sqrt(sumOfPower2)
 
 
+def loadListFromString(fileName):
+    newListOfWord = []
+    oldListOfWord = getListWordsFromFile(fileName)
+
+    for word in oldListOfWord:
+        newListOfWord.append(literal_eval(word))
+
+    return np.array(newListOfWord)
+
+
 if __name__ == "__main__":
-    k = 3
+    k = 10
 
     x = np.array([[0, 0, 0],
                   [7.9149087, 6.55160469, 4.23423],
@@ -107,4 +121,9 @@ if __name__ == "__main__":
                   [0.9453461, 0.574054671, 2.56563],
                   [32.04621601, 20.07401111, 25.56563]])
 
-    print(kmeans(k, 0.0004, x)[0])
+    #print(kmeans(k, 0.0004, x)[0])
+
+    M = loadListFromString("results/resultArray.txt")
+
+    print(kmeans(k, 0.0004, M)[0])
+
