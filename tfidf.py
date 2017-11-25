@@ -110,9 +110,11 @@ class Tfidf:
 
         self.writeResultWords(selectedWord, fileNameOut)
 
+        arrayOut = [str(result[lines]) + "\n" for lines in result]
         with open(fileNameOut + "Array.txt", 'w+') as fileOut:
-            for lines in result:
-                fileOut.writelines(str(result[lines]) + "\n")
+            fileOut.writelines(arrayOut)
+            #for lines in result:
+             #   fileOut.writelines(str(result[lines]) + "\n")
 
     def writeResultWords(self, selectedWord, fileNameOut):
         arrayOut = [k + " " + str(v) + "\n" for k, v in selectedWord]
@@ -152,7 +154,7 @@ def main():
     fileName = "nsfabs_part{0}_out/docwords.txt"
     docWords = loadAllData(fileName)
 
-    myTfidf = Tfidf(docWords[:10000], 500)
+    myTfidf = Tfidf(docWords, 500)
     myTfidf.getNumberOfWordInEachDocument()
 
     myTf = myTfidf.tf()
